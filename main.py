@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import gyms, trainers, food, users, crowd
 from database.db import engine, Base
+from database.seed import seed
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -13,7 +14,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allow all origins for now (restrict in production)
+# Allow all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -41,3 +42,17 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+@app.post("/seed")
+def seed_database():
+    """Seed the database with Malappuram gym data"""
+    try:
+        seed()
+        return {"message": "✅ Database seeded successfully with Malappuram gyms!"}
+    except Exception as e:
+        return {"message": f"Already seeded or error: {str(e)}"}
+
+# Auto seed on startup
+@app.on_event("startup")
+async def startup_event():
+    seed()
