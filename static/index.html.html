@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GymSync Staff — Crowd Update</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0a0a0a;
+  color: #f0f0f0;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.header {
+  background: #141414;
+  padding: 16px 20px;
+  border-bottom: 1px solid #222;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo {
+  width: 36px; height: 36px;
+  background: #1DB954;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: #fff;
+}
+.header-title { font-size: 17px; font-weight: 700; }
+.header-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+.container { padding: 20px; max-width: 480px; margin: 0 auto; }
+
+.gym-selector {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.gym-selector label { font-size: 12px; color: #888; margin-bottom: 6px; display: block; }
+.gym-selector select {
+  width: 100%;
+  background: #1e1e1e;
+  color: #f0f0f0;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  outline: none;
+}
+
+.current-crowd {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.current-label { font-size: 12px; color: #888; margin-bottom: 8px; }
+.current-value { font-size: 48px; font-weight: 900; }
+.current-status { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.crowd-bar-bg { height: 8px; background: #2a2a2a; border-radius: 4px; overflow: hidden; margin-top: 12px; }
+.crowd-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+.section-title { font-size: 14px; font-weight: 700; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.crowd-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.crowd-btn {
+  background: #141414;
+  border: 2px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.crowd-btn:active { transform: scale(0.96); }
+.crowd-btn.selected { border-width: 2px; }
+.crowd-btn-emoji { font-size: 28px; margin-bottom: 6px; }
+.crowd-btn-label { font-size: 14px; font-weight: 700; }
+.crowd-btn-pct { font-size: 12px; color: #888; margin-top: 2px; }
+
+.manual-section {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.manual-label { font-size: 13px; color: #888; margin-bottom: 8px; }
+.manual-row { display: flex; gap: 10px; align-items: center; }
+.manual-input {
+  flex: 1;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #f0f0f0;
+  font-size: 16px;
+  outline: none;
+}
+.manual-input::placeholder { color: #555; }
+.manual-unit { color: #888; font-size: 14px; }
+
+.update-btn {
+  width: 100%;
+  background: #1DB954;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 12px;
+}
+.update-btn:active { opacity: 0.8; }
+.update-btn:disabled { background: #1a3320; color: #555; cursor: not-allowed; }
+
+.success-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1DB954;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 999;
+}
+.success-toast.show { opacity: 1; }
+
+.history {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.history-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1e1e1e; }
+.history-item:last-child { border-bottom: none; }
+.history-time { font-size: 12px; color: #888; }
+.history-crowd { font-size: 13px; font-weight: 600; }
+
+.staff-note {
+  background: #0d1a10;
+  border: 1px solid #1a3320;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+.staff-note p { font-size: 12px; color: #6ee7a0; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">G</div>
+  <div>
+    <div class="header-title">GymSync Staff</div>
+    <div class="header-sub">Crowd Update Panel</div>
+  </div>
+</div>
+
+<div id="successToast" class="success-toast">✅ Crowd updated successfully!</div>
+
+<div class="container">
+
+  <!-- Gym selector -->
+  <div class="gym-selector">
+    <label>SELECT YOUR GYM</label>
+    <select id="gymSelect" onchange="loadGym()">
+      <option value="">-- Choose your gym --</option>
+      <option value="1">Your Life Gym — Wandoor</option>
+      <option value="2">Fitness Plus Gym — Malappuram Town</option>
+      <option value="3">Iron Zone Fitness — Manjeri</option>
+      <option value="4">Power House Gym — Tirur</option>
+      <option value="5">Gold's Fitness Center — Perinthalmanna</option>
+      <option value="6">Shape Up Gym — Kondotty</option>
+      <option value="7">Muscle Factory — Ponnani</option>
+      <option value="8">Fit Kerala Gym — Kottakkal</option>
+    </select>
+  </div>
+
+  <div id="mainContent" style="display:none">
+
+    <!-- Current crowd display -->
+    <div class="current-crowd">
+      <div class="current-label">CURRENT CROWD</div>
+      <div class="current-value" id="currentPct" style="color: #1DB954">0%</div>
+      <div class="current-status" id="currentStatus" style="color: #1DB954">Quiet</div>
+      <div class="crowd-bar-bg">
+        <div class="crowd-bar-fill" id="crowdBar" style="width: 0%; background: #1DB954"></div>
+      </div>
+    </div>
+
+    <!-- Staff note -->
+    <div class="staff-note">
+      <p>📱 Update the crowd level every 30 minutes so GymSync users know when to visit. This helps your gym get more customers at off-peak times!</p>
+    </div>
+
+    <!-- Quick crowd buttons -->
+    <div class="section-title">Quick Update</div>
+    <div class="crowd-buttons">
+      <div class="crowd-btn" id="btn-empty" onclick="selectLevel('empty', 5, '#1DB954')" style="border-color: #1DB954">
+        <div class="crowd-btn-emoji">🏜️</div>
+        <div class="crowd-btn-label" style="color: #1DB954">Empty</div>
+        <div class="crowd-btn-pct">~5% full</div>
+      </div>
+      <div class="crowd-btn" id="btn-quiet" onclick="selectLevel('quiet', 20, '#1DB954')">
+        <div class="crowd-btn-emoji">😊</div>
+        <div class="crowd-btn-label">Quiet</div>
+        <div class="crowd-btn-pct">~20% full</div>
+      </div>
+      <div class="crowd-btn" id="btn-moderate" onclick="selectLevel('moderate', 50, '#F59E0B')">
+        <div class="crowd-btn-emoji">👥</div>
+        <div class="crowd-btn-label">Moderate</div>
+        <div class="crowd-btn-pct">~50% full</div>
+      </div>
+      <div class="crowd-btn" id="btn-busy" onclick="selectLevel('busy', 75, '#F59E0B')">
+        <div class="crowd-btn-emoji">🔥</div>
+        <div class="crowd-btn-label">Busy</div>
+        <div class="crowd-btn-pct">~75% full</div>
+      </div>
+      <div class="crowd-btn" id="btn-full" onclick="selectLevel('full', 95, '#EF4444')" style="grid-column: 1 / -1">
+        <div class="crowd-btn-emoji">🚨</div>
+        <div class="crowd-btn-label">Almost Full</div>
+        <div class="crowd-btn-pct">~95% full</div>
+      </div>
+    </div>
+
+    <!-- Manual count entry -->
+    <div class="manual-section">
+      <div class="manual-label">OR ENTER EXACT COUNT</div>
+      <div class="manual-row">
+        <input type="number" class="manual-input" id="manualCount" placeholder="e.g. 24" min="0" oninput="onManualInput()" />
+        <span class="manual-unit">people inside</span>
+      </div>
+    </div>
+
+    <!-- Update button -->
+    <button class="update-btn" id="updateBtn" onclick="updateCrowd()">
+      📊 Update Crowd Now
+    </button>
+
+    <!-- Update history -->
+    <div class="history">
+      <div class="history-title">📋 Today's Updates</div>
+      <div id="historyList">
+        <div class="history-item">
+          <span class="history-time">No updates yet today</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'https://gymsync-backend-production.up.railway.app';
+let selectedGymId = null;
+let selectedCount = null;
+let gymCapacity = 50;
+let updateHistory = [];
+
+const CAPACITIES = { 1:40, 2:60, 3:80, 4:45, 5:100, 6:35, 7:55, 8:40 };
+
+function loadGym() {
+  selectedGymId = document.getElementById('gymSelect').value;
+  if (!selectedGymId) {
+    document.getElementById('mainContent').style.display = 'none';
+    return;
+  }
+  gymCapacity = CAPACITIES[selectedGymId] || 50;
+  document.getElementById('mainContent').style.display = 'block';
+  fetchCurrentCrowd();
+}
+
+async function fetchCurrentCrowd() {
+  try {
+    const res = await fetch(`${API}/api/gyms/${selectedGymId}/crowd`);
+    const data = await res.json();
+    updateDisplay(data.crowdPercent, data.currentCount);
+  } catch(e) {
+    console.log('Could not fetch crowd:', e);
+  }
+}
+
+function updateDisplay(pct, count) {
+  const color = pct < 40 ? '#1DB954' : pct < 70 ? '#F59E0B' : '#EF4444';
+  const status = pct < 40 ? 'Quiet' : pct < 70 ? 'Moderate' : 'Busy';
+  document.getElementById('currentPct').textContent = pct + '%';
+  document.getElementById('currentPct').style.color = color;
+  document.getElementById('currentStatus').textContent = status;
+  document.getElementById('currentStatus').style.color = color;
+  document.getElementById('crowdBar').style.width = pct + '%';
+  document.getElementById('crowdBar').style.background = color;
+}
+
+function selectLevel(level, pct, color) {
+  // Deselect all
+  ['empty','quiet','moderate','busy','full'].forEach(l => {
+    const btn = document.getElementById('btn-' + l);
+    btn.style.borderColor = '#2a2a2a';
+    btn.style.background = '#141414';
+  });
+
+  // Select this one
+  const btn = document.getElementById('btn-' + level);
+  btn.style.borderColor = color;
+  btn.style.background = color + '22';
+
+  // Calculate count from percentage
+  selectedCount = Math.round((pct / 100) * gymCapacity);
+  document.getElementById('manualCount').value = selectedCount;
+
+  // Update preview
+  updateDisplay(pct, selectedCount);
+}
+
+function onManualInput() {
+  const val = parseInt(document.getElementById('manualCount').value) || 0;
+  selectedCount = Math.min(val, gymCapacity);
+  const pct = Math.round((selectedCount / gymCapacity) * 100);
+  updateDisplay(pct, selectedCount);
+
+  // Deselect quick buttons
+  ['empty','quiet','moderate','busy','full'].forEach(l => {
+    document.getElementById('btn-' + l).style.borderColor = '#2a2a2a';
+    document.getElementById('btn-' + l).style.background = '#141414';
+  });
+}
+
+async function updateCrowd() {
+  if (!selectedGymId) return;
+  const count = selectedCount || parseInt(document.getElementById('manualCount').value) || 0;
+
+  const btn = document.getElementById('updateBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Updating...';
+
+  try {
+    const res = await fetch(`${API}/api/gyms/${selectedGymId}/crowd?count=${count}`, {
+      method: 'PUT',
+    });
+    const data = await res.json();
+
+    // Show success toast
+    const toast = document.getElementById('successToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+
+    // Add to history
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const pct = Math.round((count / gymCapacity) * 100);
+    updateHistory.unshift({ time: timeStr, count, pct });
+    if (updateHistory.length > 5) updateHistory.pop();
+    renderHistory();
+
+  } catch(e) {
+    alert('Error updating crowd. Check your internet connection.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📊 Update Crowd Now';
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (updateHistory.length === 0) {
+    list.innerHTML = '<div class="history-item"><span class="history-time">No updates yet today</span></div>';
+    return;
+  }
+  list.innerHTML = updateHistory.map(h => {
+    const color = h.pct < 40 ? '#1DB954' : h.pct < 70 ? '#F59E0B' : '#EF4444';
+    return `<div class="history-item">
+      <span class="history-time">${h.time}</span>
+      <span class="history-crowd" style="color:${color}">${h.count} people · ${h.pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// Auto refresh every 2 minutes
+setInterval(() => {
+  if (selectedGymId) fetchCurrentCrowd();
+}, 120000);
+</script>
+</body>
+</html>
